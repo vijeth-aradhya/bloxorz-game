@@ -291,31 +291,55 @@ void createTriangle ()
 }
 
 // Creates the rectangle object used in this sample code
-void createRectangle ()
+void createSwitch (VAO** line_1, VAO** line_2, float width, float length, float height)
 {
+  float reduce=0.04;
+  height+=0.0009;
   // GL3 accepts only Triangles. Quads are not supported
-  static const GLfloat vertex_buffer_data [] = {
-    -1.2,-1,0, // vertex 1
-    1.2,-1,0, // vertex 2
-    1.2, 1,0, // vertex 3
+  static const GLfloat vertex_buffer_data_1 [] = {
+    width-reduce,length,height, // vertex 1
+    width,length-reduce,height, // vertex 2
+    -width+reduce,-length,height, // vertex 3
 
-    1.2, 1,0, // vertex 3
-    -1.2, 1,0, // vertex 4
-    -1.2,-1,0  // vertex 1
+    -width+reduce, -length,height, // vertex 3
+    -width, -length+reduce,height, // vertex 4
+    width-reduce,length,height, // vertex 1
   };
 
-  static const GLfloat color_buffer_data [] = {
-    1,0,0, // color 1
-    0,0,1, // color 2
-    0,1,0, // color 3
+  static const GLfloat color_buffer_data_1 [] = {
+    1,1,1, // color 1
+    1,1,1, // color 2
+    1,1,1, // color 3
 
-    0,1,0, // color 3
-    0.3,0.3,0.3, // color 4
-    1,0,0  // color 1
+    1,1,1, // color 3
+    1,1,1, // color 4
+    1,1,1  // color 1
   };
+
+  static const GLfloat vertex_buffer_data_2 [] = {
+    -width+reduce,length,height, // vertex 1
+    -width,length-reduce,height, // vertex 2
+    width-reduce,-length,height, // vertex 3
+
+    width-reduce, -length,height, // vertex 3
+    width, -width+reduce,height, // vertex 4
+    -width+reduce,length,height, // vertex 1
+  };
+
+  static const GLfloat color_buffer_data_2 [] = {
+    1,1,1, // color 1
+    1,1,1, // color 2
+    1,1,1, // color 3
+
+    1,1,1, // color 3
+    1,1,1, // color 4
+    1,1,1  // color 1
+  };
+
 
   // create3DObject creates and returns a handle to a VAO that can be used later
-  rectangle = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data, color_buffer_data, GL_FILL);
+  *line_1 = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data_1, color_buffer_data_1, GL_FILL);
+  *line_2 = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data_2, color_buffer_data_2, GL_FILL);
 }
 
 float camera_rotation_angle = 90;
@@ -327,7 +351,7 @@ class CuboidColor {
     float face[6][3];
 };
 
-void createCuboid(float length, float width, float height, VAO** cuboid, bool block, CuboidColor color) {
+void createCuboid(float length, float width, float height, VAO** cuboid, bool block, CuboidColor color, bool is_fragile, bool is_bridge) {
 
   GLfloat vertex_buffer_data [] = {
 
@@ -390,48 +414,48 @@ void createCuboid(float length, float width, float height, VAO** cuboid, bool bl
       
       // face 1 (top-face)
       0,0,0,
-      0.2,0,0,
-      0.4,0,0,
-      0.6,0,0,
-      0.6,0,0,
-      0.8,0,0,
+      0.2,is_fragile*0.2,is_bridge*0.2,
+      0.4,is_fragile*0.4,is_bridge*0.4,
+      0.6,is_fragile*0.6,is_bridge*0.6,
+      0.6,is_fragile*0.6,is_bridge*0.6,
+      0.8,is_fragile*0.8,is_bridge*0.8,
 
       // face 2 (top-face)
       0,0,0,
-      0.2,0,0,
-      0.4,0,0,
-      0.6,0,0,
-      0.6,0,0,
-      0.8,0,0,
+      0.2,is_fragile*0.2,is_bridge*0.2,
+      0.4,is_fragile*0.4,is_bridge*0.4,
+      0.6,is_fragile*0.6,is_bridge*0.6,
+      0.6,is_fragile*0.6,is_bridge*0.6,
+      0.8,is_fragile*0.8,is_bridge*0.8,
 
       // face 3
       0,0,0,
-      0.2,0,0,
-      0.4,0,0,
-      0.6,0,0,
-      0.6,0,0,
-      0.8,0,0,
+      0.2,is_fragile*0.2,is_bridge*0.2,
+      0.4,is_fragile*0.4,is_bridge*0.4,
+      0.6,is_fragile*0.6,is_bridge*0.6,
+      0.6,is_fragile*0.6,is_bridge*0.6,
+      0.8,is_fragile*0.8,is_bridge*0.8,
       // face 4
-     0,0,0,
-      0.2,0,0,
-      0.4,0,0,
-      0.6,0,0,
-      0.6,0,0,
-      0.8,0,0,
+      0,0,0,
+      0.2,is_fragile*0.2,is_bridge*0.2,
+      0.4,is_fragile*0.4,is_bridge*0.4,
+      0.6,is_fragile*0.6,is_bridge*0.6,
+      0.6,is_fragile*0.6,is_bridge*0.6,
+      0.8,is_fragile*0.8,is_bridge*0.8,
       // face 5
       0,0,0,
-      0.2,0,0,
-      0.4,0,0,
-      0.6,0,0,
-      0.6,0,0,
-      0.8,0,0,
+      0.2,is_fragile*0.2,is_bridge*0.2,
+      0.4,is_fragile*0.4,is_bridge*0.4,
+      0.6,is_fragile*0.6,is_bridge*0.6,
+      0.6,is_fragile*0.6,is_bridge*0.6,
+      0.8,is_fragile*0.8,is_bridge*0.8,
       // face 6
       0,0,0,
-      0.2,0,0,
-      0.4,0,0,
-      0.6,0,0,
-      0.6,0,0,
-      0.8,0,0,
+      0.2,is_fragile*0.2,is_bridge*0.2,
+      0.4,is_fragile*0.4,is_bridge*0.4,
+      0.6,is_fragile*0.6,is_bridge*0.6,
+      0.6,is_fragile*0.6,is_bridge*0.6,
+      0.8,is_fragile*0.8,is_bridge*0.8,
     };
     *cuboid = create3DObject(GL_TRIANGLES, 36, vertex_buffer_data, color_buffer_data, GL_FILL);
   }
@@ -489,14 +513,19 @@ void createCuboid(float length, float width, float height, VAO** cuboid, bool bl
 class Tiles {
   public:
     VAO* body;
+    VAO* line_1;
+    VAO* line_2;
     float width;
     float height;
     float length;
     float x;
     float y;
     bool status;
+    bool is_switch;
+    bool is_bridge;
+    bool is_fragile;
 
-    void create() {
+    void create(bool is_switch, bool is_fragile, bool is_bridge) {
 
       int i;
       CuboidColor block_color;
@@ -505,8 +534,11 @@ class Tiles {
       this->length=0.4;
       this->height=0.1;
       this->status=1;
+      this->is_switch=is_switch;
 
-      createCuboid(this->length/2, this->width/2, this->height/2, &this->body, 0, block_color);
+      createCuboid(this->length/2, this->width/2, this->height/2, &this->body, 0, block_color, is_fragile, is_bridge);
+      if(this->is_switch)
+        createSwitch(&line_1, &line_2, this->width/2, this->length/2, this->height/2);
 
     }
 };
@@ -595,7 +627,7 @@ class Block {
         block_color.face[5][2]=0;
       }
 
-      createCuboid(this->length/2, this->width/2, this->height/2, &this->body, 1, block_color);
+      createCuboid(this->length/2, this->width/2, this->height/2, &this->body, 1, block_color, 0, 0);
 
     }
 
@@ -783,7 +815,6 @@ void checkGameStatus(GLFWwindow* window) {
     }
   }
 
-  
 }
 
 /* Render the scene with openGL */
@@ -850,6 +881,11 @@ void draw ()
       MVP = VP * Matrices.model;
       glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
       draw3DObject(tiles[i][j].body);
+
+      if(tiles[i][j].is_switch) {
+        draw3DObject(tiles[i][j].line_1);
+        draw3DObject(tiles[i][j].line_2);
+      }
     }
   }
 
@@ -974,11 +1010,10 @@ void initGL (GLFWwindow* window, int width, int height)
   /* Objects should be created before any other gl function and shaders */
   // Create the models
   createTriangle(); // Generate the VAO, VBOs, vertices data & copy into the array buffer
-  createRectangle();
   
   for(i=0;i<10;i++) {
     for(j=0;j<10;j++) {
-      tiles[i][j].create();
+      tiles[i][j].create(0, 0, 0);
       tiles[i][j].x=tiles[i][j].width*i;
       tiles[i][j].y=tiles[i][j].length*j;
     }
