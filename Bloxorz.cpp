@@ -510,6 +510,26 @@ void createCuboid(float length, float width, float height, VAO** cuboid, bool bl
   // create3DObject creates and returns a handle to a VAO that can be used later
 }
 
+float currAxis[3];
+
+string getAxis() {
+  if(currAxis[0]==1.0)
+    return "x";
+  else
+    return "y";
+}
+
+void changeAxis() {
+  if(currAxis[0]==1) {
+    currAxis[0]=0;
+    currAxis[1]=1;
+  }
+  else {
+    currAxis[0]=1;
+    currAxis[1]=0;
+  }
+}
+
 class Tiles {
   public:
     VAO* body;
@@ -532,7 +552,7 @@ class Tiles {
 
       this->width=0.4;
       this->length=0.4;
-      this->height=0.1;
+      this->height=0.2;
       this->status=1;
       this->is_switch=is_switch;
 
@@ -594,7 +614,7 @@ class Block {
       this->temp_rotate_x=0;
       this->temp_rotate_y=0;
       this->tempTranslate = glm::translate (glm::vec3(0, 0, this->height/2));
-      this->invTempTranslate = glm::translate (glm::vec3(0, 0, 0));
+      this->invTempTranslate = glm::translate (glm::vec3(0, 0, 0.1));
 
       for(i=0;i<6;i++) {
         block_color.face[i][0]=0;
@@ -640,23 +660,24 @@ class Block {
         if(move == "left") {
           this->left=1;
           this->tempTranslate=glm::translate (glm::vec3(this->width/2, 0, this->height/2));
-          this->invTempTranslate=glm::translate (glm::vec3(-this->width/2, 0, 0));
+          this->invTempTranslate=glm::translate (glm::vec3(-this->width/2, 0, 0.1));
         }
         else if(move == "right") {
           this->right=1;
           this->tempTranslate=glm::translate (glm::vec3(-this->width/2, 0, this->height/2));
-          this->invTempTranslate=glm::translate (glm::vec3(this->width/2, 0, 0));
+          this->invTempTranslate=glm::translate (glm::vec3(this->width/2, 0, 0.1));
         }
         else if(move == "up") {
           this->up=1;
           this->tempTranslate=glm::translate (glm::vec3(0, -this->length/2, this->height/2));
-          this->invTempTranslate=glm::translate (glm::vec3(0, this->length/2, 0));
+          this->invTempTranslate=glm::translate (glm::vec3(0, this->length/2, 0.1));
         }
         else {
           this->down=1;
           this->tempTranslate=glm::translate (glm::vec3(0, this->length/2, this->height/2));
-          this->invTempTranslate=glm::translate (glm::vec3(0, -this->length/2, 0));
+          this->invTempTranslate=glm::translate (glm::vec3(0, -this->length/2, 0.1));
         }
+        //changeAxis();
         this->rotate_status=1;
       }
     }
@@ -667,6 +688,8 @@ Tiles tiles[10][10];
 Block block[3];
 
 float currX, currY;
+
+bool top_view, tower_view, level_view, block_view, front_view;
 
 void rotate_block() {
   int i;
@@ -679,7 +702,7 @@ void rotate_block() {
           block[i].left=0;
           block[i].rotate_angle_y=0;
           block[i].tempTranslate = glm::translate (glm::vec3(0, 0, block[i].height/2));
-          block[i].invTempTranslate=glm::translate (glm::vec3(0, 0, 0));
+          block[i].invTempTranslate=glm::translate (glm::vec3(0, 0, 0.1));
           if(block[i].name == "z") {
             block[0].status=0;
             block[2].status=1;
@@ -710,7 +733,7 @@ void rotate_block() {
           block[i].right=0;
           block[i].rotate_angle_y=0;
           block[i].tempTranslate = glm::translate (glm::vec3(0, 0, block[i].height/2));
-          block[i].invTempTranslate=glm::translate (glm::vec3(0, 0, 0));
+          block[i].invTempTranslate=glm::translate (glm::vec3(0, 0, 0.1));
           if(block[i].name == "z") {
             block[0].status=0;
             block[2].status=1;
@@ -741,7 +764,7 @@ void rotate_block() {
           block[i].up=0;
           block[i].rotate_angle_x=0;
           block[i].tempTranslate = glm::translate (glm::vec3(0, 0, block[i].height/2));
-          block[i].invTempTranslate=glm::translate (glm::vec3(0, 0, 0));
+          block[i].invTempTranslate=glm::translate (glm::vec3(0, 0, 0.1));
           if(block[i].name == "z") {
             block[0].status=0;
             block[1].status=1;
@@ -772,7 +795,7 @@ void rotate_block() {
           block[i].down=0;
           block[i].rotate_angle_x=0;
           block[i].tempTranslate = glm::translate (glm::vec3(0, 0, block[i].height/2));
-          block[i].invTempTranslate=glm::translate (glm::vec3(0, 0, 0));
+          block[i].invTempTranslate=glm::translate (glm::vec3(0, 0, 0.1));
           if(block[i].name == "z") {
             block[0].status=0;
             block[1].status=1;
@@ -814,7 +837,6 @@ void checkGameStatus(GLFWwindow* window) {
       }
     }
   }
-
 }
 
 /* Render the scene with openGL */
@@ -830,14 +852,59 @@ void draw ()
 
   camera_rotation_angle=90;
   // Eye - Location of camera. Don't change unless you are sure!!
-  glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f)-1, -1, 5*sin(camera_rotation_angle*M_PI/180.0f-1) );
+  //glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f)-1, -1, 5*sin(camera_rotation_angle*M_PI/180.0f-1) );
   // Target - Where is the camera looking at.  Don't change unless you are sure!!
-  glm::vec3 target (0, 0, 0);
   // Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
-  glm::vec3 up (0, 1, 0);
+
+  if(top_view) {
+    glm::vec3 eye(0.4*5, 0.4*5, 5);
+    glm::vec3 up (0, 1, 0);
+    glm::vec3 target (0.4*5, 0.4*5, 0);
+    Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+  }
+  else if(tower_view) {
+    glm::vec3 eye(-1, -1, 4);
+    glm::vec3 up (1, 1, 0);
+    glm::vec3 target (0.4*5, 0.4*5, 0);
+    Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+  }
+  else if(level_view) {
+    glm::vec3 eye(0.4*5, -0.4*5, 2);
+    glm::vec3 up (0, 1, 0);
+    glm::vec3 target (0.4*5, 0.4*5, 0);
+    Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+  }
+  else if(block_view) {
+    if(getAxis() == "x") {
+      glm::vec3 eye(currX-2, currY, 4);
+      glm::vec3 up (0, 0, 1);
+      glm::vec3 target (currX+0.4*10, currY, 1);
+      Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+    }
+    else {
+      glm::vec3 eye(currX, currY-2, 4);
+      glm::vec3 up (0, 0, 1);
+      glm::vec3 target (currX, currY+0.4*10, 1);
+      Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+    }
+  }
+  else if(front_view){
+    if(getAxis() == "x") {
+      glm::vec3 eye(currX+0.4, currY, 2);
+      glm::vec3 up (0, 0, 1);
+      glm::vec3 target (currX+0.4*5, currY, 0);
+      Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+    }
+    else {
+      glm::vec3 eye(currX, currY+0.4, 2);
+      glm::vec3 up (0, 0, 1);
+      glm::vec3 target (currX, currY+0.4*5, 0);
+      Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+    }
+  }
 
   // Compute Camera matrix (view)
-  Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+  //Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
   //  Don't change unless you are sure!!
   //Matrices.view = glm::lookAt(glm::vec3(-1,-1,1), glm::vec3(0,0,0), glm::vec3(1,1,2)); // Fixed camera for 2D (ortho) in XY plane
 
@@ -926,27 +993,79 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
                 break;
             case GLFW_KEY_LEFT:
                 for(i=0;i<3;i++) {
-                  if(block[i].status)  
-                    block[i].revolve_block("left");
+                  if(block[i].status) {
+                    if(getAxis() != "x")
+                      block[i].revolve_block("left");
+                    else
+                      block[i].revolve_block("up");
+                  }
                 }
                 break;
             case GLFW_KEY_RIGHT:
                 for(i=0;i<3;i++) {
-                  if(block[i].status)
-                    block[i].revolve_block("right");
+                  if(block[i].status) {
+                    if(getAxis() != "x")  
+                      block[i].revolve_block("right");
+                    else
+                      block[i].revolve_block("down");
+                  }
                 }
                 break;
             case GLFW_KEY_UP:
                 for(i=0;i<3;i++) {
                   if(block[i].status)
-                    block[i].revolve_block("up");
+                    if(getAxis() != "x")
+                      block[i].revolve_block("up");
+                    else
+                      block[i].revolve_block("right");
                 }
                 break;
             case GLFW_KEY_DOWN:
                 for(i=0;i<3;i++) {
                   if(block[i].status)
-                    block[i].revolve_block("down");
+                    if(getAxis() != "x")
+                      block[i].revolve_block("down");
+                    else
+                      block[i].revolve_block("left");
                 }
+                break;
+            case GLFW_KEY_T:
+                tower_view=1;
+                level_view=0;
+                top_view=0;
+                block_view=0;
+                front_view=0;
+                break;
+            case GLFW_KEY_L:
+                level_view=1;
+                tower_view=0;
+                top_view=0;
+                block_view=0;
+                front_view=0;
+                break;
+            case GLFW_KEY_U:
+                top_view=1;
+                tower_view=0;
+                level_view=0;
+                block_view=0;
+                front_view=0;
+                break;
+            case GLFW_KEY_B:
+                block_view=1;
+                top_view=0;
+                tower_view=0;
+                level_view=0;
+                front_view=0;
+                break;
+            case GLFW_KEY_F:
+                block_view=0;
+                top_view=0;
+                tower_view=0;
+                level_view=0;
+                front_view=1;
+                break;
+            case GLFW_KEY_C:
+                changeAxis();
                 break;
             default:
                 break;
@@ -1010,6 +1129,16 @@ void initGL (GLFWwindow* window, int width, int height)
   /* Objects should be created before any other gl function and shaders */
   // Create the models
   createTriangle(); // Generate the VAO, VBOs, vertices data & copy into the array buffer
+
+  tower_view=1;
+  level_view=0;
+  top_view=0;
+  block_view=0;
+  front_view=0;
+
+  currAxis[0]=0;
+  currAxis[1]=1;
+  currAxis[2]=0;
   
   for(i=0;i<10;i++) {
     for(j=0;j<10;j++) {
