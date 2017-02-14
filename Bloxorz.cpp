@@ -1,3 +1,5 @@
+#include <ao/ao.h>
+#include <mpg123.h>
 #include <iostream>
 #include <cmath>
 #include <fstream>
@@ -7,6 +9,7 @@
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
+#define BITS 8
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -516,7 +519,7 @@ int total_time, total_score, DYING;
 
 float currAxis[3], DYING_inc, DYING_rot;
 
-bool change_level;
+bool change_level, Y_NEG, Y_POS, X_NEG, X_POS;
 
 string getAxis() {
   if(currAxis[0]==1.0)
@@ -534,6 +537,10 @@ void changeAxis() {
     currAxis[0]=1;
     currAxis[1]=0;
   }
+}
+
+void playmusic() {
+    
 }
 
 class Tiles {
@@ -730,6 +737,10 @@ void rotate_block() {
       if(block[i].left) {
         block[i].rotate_angle_y-=3;
         if(block[i].rotate_angle_y<=-91) {
+          Y_NEG=1;
+          Y_POS=0;
+          X_POS=0;
+          X_NEG=0;
           block[i].rotate_status=0;
           block[i].left=0;
           block[i].rotate_angle_y=0;
@@ -761,6 +772,10 @@ void rotate_block() {
       else if(block[i].right) {
         block[i].rotate_angle_y+=3;
         if(block[i].rotate_angle_y>=91) {
+          Y_POS=1;
+          Y_NEG=0;
+          X_NEG=0;
+          X_POS=0;
           block[i].rotate_status=0;
           block[i].right=0;
           block[i].rotate_angle_y=0;
@@ -792,6 +807,10 @@ void rotate_block() {
       else if(block[i].up) {
         block[i].rotate_angle_x-=3;
         if(block[i].rotate_angle_x<=-91) {
+          X_NEG=1;
+          X_POS=0;
+          Y_POS=0;
+          Y_NEG=0;
           block[i].rotate_status=0;
           block[i].up=0;
           block[i].rotate_angle_x=0;
@@ -823,6 +842,10 @@ void rotate_block() {
       else if(block[i].down) {
         block[i].rotate_angle_x+=3;
         if(block[i].rotate_angle_x>=91) {
+          X_POS=1;
+          X_NEG=0;
+          Y_POS=0;
+          Y_NEG=0;
           block[i].rotate_status=0;
           block[i].down=0;
           block[i].rotate_angle_x=0;
@@ -950,17 +973,19 @@ void draw ()
   for(i=0;i<3;i++) {
     if(block[i].status) {
       Matrices.model = glm::mat4(1.0f);
-      if(block[i].rotate_angle_x < 0) {
-        block[i].rotate_angle_x -= DYING_rot;
-      }
-      else {
-        block[i].rotate_angle_x += DYING_rot;
-      }
-      if(block[i].rotate_angle_y < 0) {
-        block[i].rotate_angle_y -= DYING_rot;
-      }
-      else {
-        block[i].rotate_angle_y += DYING_rot;
+      if(DYING) {
+        if(Y_NEG) {
+          block[i].rotate_angle_y -= DYING_rot;
+        }
+        else if(X_POS) {
+          block[i].rotate_angle_x += DYING_rot;
+        }
+        else if(Y_POS) {
+          block[i].rotate_angle_y += DYING_rot;
+        }
+        else if(X_NEG) {
+          block[i].rotate_angle_x -= DYING_rot;
+        }
       }
       glm::mat4 translateBlock = glm::translate (glm::vec3(block[i].x, block[i].y, block[i].z-DYING_inc));        // glTranslatef
       glm::mat4 rotateBlockX = glm::rotate((float)(block[i].rotate_angle_x*M_PI/180.0f), glm::vec3(1,0,0));
@@ -976,7 +1001,6 @@ void draw ()
 
   if(DYING != 0) {
     DYING_inc+=0.08;
-    DYING_rot+=0.1;
   }
 
   glm::mat4 translateTile;
@@ -1285,7 +1309,11 @@ void createGame() {
   changePos(0.4*1, 0.4*1, "z");
   DYING=0;
   DYING_inc=0;
-  DYING_rot=0;
+  DYING_rot=3;
+  X_POS=0;
+  X_NEG=0;
+  Y_POS=0;
+  Y_NEG=0;
     switch (currLevel) {
       case 1:
         levels.create_level_1();
@@ -1436,6 +1464,39 @@ int main (int argc, char** argv)
 
     GLFWwindow* window = initGLFW(width, height);
 
+    mpg123_handle *mh;
+    unsigned char *buffer;
+    size_t buffer_size;
+    size_t done;
+    int err;
+
+    int driver;
+    ao_device *dev;
+
+    ao_sample_format format;
+    int channels, encoding;
+    long rate;
+
+    /* initializations */
+    ao_initialize();
+    driver = ao_default_driver_id();
+    mpg123_init();
+    mh = mpg123_new(NULL, &err);
+    buffer_size = 2800;
+    buffer = (unsigned char*) malloc(buffer_size * sizeof(unsigned char));
+
+    /* open the file and get the decoding format */
+    mpg123_open(mh, "doc.mp3");
+    mpg123_getformat(mh, &rate, &channels, &encoding);
+
+    /* set the output format and open the output device */
+    format.bits = mpg123_encsize(encoding) * BITS;
+    format.rate = rate;
+    format.channels = channels;
+    format.byte_format = AO_FMT_NATIVE;
+    format.matrix = 0;
+    dev = ao_open_live(driver, &format, NULL);
+
   initGL (window, width, height);
 
     double last_update_time = glfwGetTime(), current_time;
@@ -1452,10 +1513,18 @@ int main (int argc, char** argv)
         // Poll for Keyboard and mouse events
         glfwPollEvents();
 
+        /* decode and play */
+        /*
+        if (mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK)
+            ao_play(dev, (char*)buffer, done);
+        else mpg123_seek(mh, 0, SEEK_SET); // loop audio from start again if ended
+        */
+        
         createGame();
         checkGameStatus(window);
         updateGameStatus();
         getCurrIndex();
+        //playmusic();
 
         // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
         current_time = glfwGetTime(); // Time in seconds
@@ -1466,6 +1535,14 @@ int main (int argc, char** argv)
             last_update_time = current_time;
         }
     }
+
+        /* clean up */
+    free(buffer);
+    ao_close(dev);
+    mpg123_close(mh);
+    mpg123_delete(mh);
+    mpg123_exit();
+    ao_shutdown();
 
     glfwTerminate();
 //    exit(EXIT_SUCCESS);
