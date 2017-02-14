@@ -345,6 +345,8 @@ void createSwitch (VAO** line_1, VAO** line_2, float width, float length, float 
 float camera_rotation_angle = 90;
 float rectangle_rotation = 0;
 float triangle_rotation = 0;
+float currX, currY, TIME_X, TIME_Y, TIME_Z, SCORE_X, SCORE_Y, SCORE_Z;
+int currIndexX, currIndexY;
 
 class CuboidColor {
   public:
@@ -510,7 +512,11 @@ void createCuboid(float length, float width, float height, VAO** cuboid, bool bl
   // create3DObject creates and returns a handle to a VAO that can be used later
 }
 
-float currAxis[3];
+int total_time, total_score, DYING;
+
+float currAxis[3], DYING_inc, DYING_rot;
+
+bool change_level;
 
 string getAxis() {
   if(currAxis[0]==1.0)
@@ -544,17 +550,31 @@ class Tiles {
     bool is_switch;
     bool is_bridge;
     bool is_fragile;
+    bool is_finish;
+    bool toggle_swtich;
 
     void create(bool is_switch, bool is_fragile, bool is_bridge) {
 
       int i;
       CuboidColor block_color;
 
+      if(is_bridge&&is_fragile) {
+        this->is_finish=1;
+        this->is_fragile=0;
+        this->is_bridge=0;
+      }
+      else {
+        this->is_finish=0;
+        this->is_fragile=is_fragile;
+        this->is_bridge=is_bridge;
+      }
+
       this->width=0.4;
       this->length=0.4;
       this->height=0.2;
       this->status=1;
       this->is_switch=is_switch;
+      this->toggle_swtich=0;
 
       createCuboid(this->length/2, this->width/2, this->height/2, &this->body, 0, block_color, is_fragile, is_bridge);
       if(this->is_switch)
@@ -653,6 +673,7 @@ class Block {
 
     void revolve_block(string move) {
       if(!this->rotate_status) {
+        //updateScore();
         if(this->standing)
           this->standing=0;
         else
@@ -680,6 +701,7 @@ class Block {
         //changeAxis();
         this->rotate_status=1;
       }
+
     }
 };
 
@@ -687,9 +709,19 @@ Tiles tiles[10][10];
 
 Block block[3];
 
-float currX, currY;
-
 bool top_view, tower_view, level_view, block_view, front_view;
+
+int currLevel;
+
+void getCurrIndex() {
+  int i, j;
+  for(i=0;i<3;i++) {
+    if(block[i].name == "z"&&block[i].status==1) {
+      currIndexX=currX/0.4;
+      currIndexY=currY/0.4;
+    }
+  }
+}
 
 void rotate_block() {
   int i;
@@ -823,20 +855,12 @@ void rotate_block() {
   }
 }
 
-void checkGameStatus(GLFWwindow* window) {
-  int i, j;
-
-  if(currX>3.6||currX<0||currY>3.6||currY<0)
-    quit(window);
-
-  for(i=0;i<10;i++) {
-    for(j=0;j<10;j++) {
-      if(!tiles[i][j].status) {
-        if(abs(currX-tiles[i][j].x)<=0.4||abs(currY-tiles[i][j].y)<=0.4)
-          quit(window);
-      }
-    }
+bool isOnTile(int i, int j) {
+  if(abs(currX-tiles[i][j].x)<0.1&&abs(currY-tiles[i][j].y)<0.1) {
+    return 1;
   }
+  else
+    return 0;
 }
 
 /* Render the scene with openGL */
@@ -926,7 +950,19 @@ void draw ()
   for(i=0;i<3;i++) {
     if(block[i].status) {
       Matrices.model = glm::mat4(1.0f);
-      glm::mat4 translateBlock = glm::translate (glm::vec3(block[i].x, block[i].y, block[i].z));        // glTranslatef
+      if(block[i].rotate_angle_x < 0) {
+        block[i].rotate_angle_x -= DYING_rot;
+      }
+      else {
+        block[i].rotate_angle_x += DYING_rot;
+      }
+      if(block[i].rotate_angle_y < 0) {
+        block[i].rotate_angle_y -= DYING_rot;
+      }
+      else {
+        block[i].rotate_angle_y += DYING_rot;
+      }
+      glm::mat4 translateBlock = glm::translate (glm::vec3(block[i].x, block[i].y, block[i].z-DYING_inc));        // glTranslatef
       glm::mat4 rotateBlockX = glm::rotate((float)(block[i].rotate_angle_x*M_PI/180.0f), glm::vec3(1,0,0));
       glm::mat4 rotateBlockY = glm::rotate((float)(block[i].rotate_angle_y*M_PI/180.0f), glm::vec3(0,1,0));
       Matrices.model *= (block[i].invTempTranslate*translateBlock*rotateBlockX*rotateBlockY*block[i].tempTranslate);
@@ -938,20 +974,27 @@ void draw ()
 
   rotate_block();
 
+  if(DYING != 0) {
+    DYING_inc+=0.08;
+    DYING_rot+=0.1;
+  }
+
   glm::mat4 translateTile;
     
   for(i=0;i<10;i++) {
-    for(j=0;j<10&&tiles[i][j].status;j++) {
-      Matrices.model = glm::mat4(1.0f);
-      translateTile = glm::translate (glm::vec3(tiles[i][j].x, tiles[i][j].y, 0));        // glTranslatef
-      Matrices.model *= (translateTile);
-      MVP = VP * Matrices.model;
-      glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-      draw3DObject(tiles[i][j].body);
+    for(j=0;j<10;j++) {
+      if(tiles[i][j].status) {
+        Matrices.model = glm::mat4(1.0f);
+        translateTile = glm::translate (glm::vec3(tiles[i][j].x, tiles[i][j].y, 0));        // glTranslatef
+        Matrices.model *= (translateTile);
+        MVP = VP * Matrices.model;
+        glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        draw3DObject(tiles[i][j].body);
 
-      if(tiles[i][j].is_switch) {
-        draw3DObject(tiles[i][j].line_1);
-        draw3DObject(tiles[i][j].line_2);
+        if(tiles[i][j].is_switch) {
+          draw3DObject(tiles[i][j].line_1);
+          draw3DObject(tiles[i][j].line_2);
+        }
       }
     }
   }
@@ -1073,6 +1116,212 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
     }
 }
 
+class Level {
+  public:
+    int stop_switch_x;
+    int stop_switch_y;
+
+    void create_level_1() {
+      int i, j;
+
+      tiles[8][8].create(0, 1, 1);
+      for(i=0;i<10;i++) {
+        for(j=0;j<10;j++) {
+          if(j!=8||i!=8) {
+            tiles[i][j].create(0, 0, 0);
+          }
+          tiles[i][j].x=tiles[i][j].width*i;
+          tiles[i][j].y=tiles[i][j].length*j;
+        }
+      }
+
+
+      for(i=0;i<7;i++) {
+        for(j=3;j<10;j++) {
+          tiles[i][j].status=0;
+        }
+      }
+      for(i=3;i<7;i++) {
+        tiles[i][2].status=0;
+        tiles[i][0].status=0;
+      }
+      for(i=3;i<7;i++) {
+        tiles[9][i].status=0;
+        tiles[7][i].status=0;
+      }
+    }
+
+    void create_level_2() {
+      int i, j;
+
+      for(i=0;i<10;i++) {
+        for(j=0;j<10;j++) {
+          tiles[i][j].create(0, 0, 0);
+        }
+      }
+
+      this->stop_switch_x=-1;
+      this->stop_switch_y=-1;
+
+      tiles[9][9].create(0, 1, 1);
+      tiles[9][0].create(1, 0, 0);
+      tiles[4][7].create(1, 0, 0);
+
+      for(i=4;i<9;i++)
+        tiles[0][i].create(0, 0, 1);
+
+      for(i=2;i<7;i++)
+        tiles[4][i].create(0, 0, 1);
+
+      for(i=0;i<10;i++) {
+        for(j=0;j<10;j++) {
+          tiles[i][j].status=0;
+        }
+      }
+
+      for(i=0;i<4;i++) {
+        for(j=0;j<4;j++) {
+          tiles[i][j].status=1;
+        }
+      }
+
+      for(i=4;i<9;i++)
+        tiles[i][0].status=1;
+      for(i=0;i<9;i++)
+        tiles[i][9].status=1;
+      tiles[9][9].status=1;
+      tiles[9][0].status=1;
+      tiles[4][7].status=1;
+
+      for(i=0;i<10;i++) {
+        for(j=0;j<10;j++) {
+          tiles[i][j].x=tiles[i][j].width*i;
+          tiles[i][j].y=tiles[i][j].length*j;
+        }
+      }
+    }
+
+    void switch_level_2() {
+      int i,j;
+      if(this->stop_switch_x!=currIndexX||this->stop_switch_y!=currIndexY) {
+        this->stop_switch_x=currX;
+        this->stop_switch_y=currY;
+        if(isOnTile(9, 0)) {
+          if(tiles[9][0].toggle_swtich) {
+            for(i=2;i<7;i++) {
+              tiles[4][i].status=0;
+            }
+            tiles[9][0].toggle_swtich=0;
+          }
+          else {
+            for(i=2;i<7;i++) {
+              tiles[4][i].status=1;
+            } 
+            tiles[9][0].toggle_swtich=0;
+          }
+        }
+        else if(isOnTile(4, 7)) {
+          if(tiles[4][7].toggle_swtich) {
+            for(i=4;i<9;i++) {
+              tiles[0][i].status=0;
+            }
+            tiles[4][7].toggle_swtich=0;
+          }
+          else {
+            for(i=4;i<9;i++) {
+              tiles[0][i].status=1;
+            }
+            tiles[4][7].toggle_swtich=0;
+          }
+        }
+      }
+    }
+};
+
+Level levels;
+
+void updateGameStatus() {
+  int i, j;
+  for(i=0;i<10;i++) {
+    for(j=0;j<10;j++) {
+      if(tiles[i][j].status) {
+        if(tiles[i][j].is_finish) {
+          if(abs(currX-tiles[i][j].x)<0.1&&abs(currY-tiles[i][j].y)<0.1) {
+            DYING=1;
+          }
+        }
+      }
+    }
+  }
+
+  switch (currLevel) {
+    case 2:
+      levels.switch_level_2();
+      break;
+    default:
+      break;
+  }
+}
+
+void changePos(float X, float Y, string axis) {
+  int i;
+  for(i=0;i<3;i++) {
+    block[i].status=0;
+    if(block[i].name == axis) {
+      block[i].x=X;
+      block[i].y=Y;
+      block[i].status=1;
+    }
+  }
+  currX=X;
+  currY=Y;
+}
+
+void createGame() {
+  if(change_level) {
+  block[0].create(0.4, 0.4, 0.8, "z");
+  block[1].create(0.4, 0.8, 0.4, "y");
+  block[2].create(0.8, 0.4, 0.4, "x");
+  changePos(0.4*1, 0.4*1, "z");
+  DYING=0;
+  DYING_inc=0;
+  DYING_rot=0;
+    switch (currLevel) {
+      case 1:
+        levels.create_level_1();
+        break;
+      case 2:
+        levels.create_level_2();
+        break;
+      case 3:
+        exit(1);
+        break;
+    }
+    change_level=0;
+  }
+}
+
+void checkGameStatus(GLFWwindow* window) {
+  int i, j;
+
+  if(DYING_inc>10)
+      change_level=1;
+
+  if(currX>3.9||currX<0||currY>3.9||currY<0) {
+    DYING=1;
+  }
+
+  for(i=0;i<10;i++) {
+    for(j=0;j<10;j++) {
+      if(!tiles[i][j].status) {
+        if(abs(currX-tiles[i][j].x)<0.3&&abs(currY-tiles[i][j].y)<0.3) {
+          DYING=1;
+        }
+      }
+    }
+  }
+}
+
 /* Initialise glfw window, I/O callbacks and the renderer to use */
 /* Nothing to Edit here */
 GLFWwindow* initGLFW (int width, int height)
@@ -1135,25 +1384,29 @@ void initGL (GLFWwindow* window, int width, int height)
   top_view=0;
   block_view=0;
   front_view=0;
+  total_score=0;
+  total_time=0;
 
   currAxis[0]=0;
   currAxis[1]=1;
   currAxis[2]=0;
-  
-  for(i=0;i<10;i++) {
-    for(j=0;j<10;j++) {
-      tiles[i][j].create(0, 0, 0);
-      tiles[i][j].x=tiles[i][j].width*i;
-      tiles[i][j].y=tiles[i][j].length*j;
-    }
-  }
 
-  currX=0;
-  currY=0;
-  
-  block[0].create(0.4, 0.4, 0.8, "z");
-  block[1].create(0.4, 0.8, 0.4, "y");
-  block[2].create(0.8, 0.4, 0.4, "x");
+  TIME_X=0;
+  TIME_Y=-2;
+  TIME_Z=0;
+
+  SCORE_X=0;
+  SCORE_Y=-2;
+  SCORE_Z=0;
+
+  currX=0.4;
+  currY=0.4;
+
+  currIndexX=1;
+  currIndexY=1;
+
+  change_level=1;
+  currLevel=1;
   
   // Create and compile our GLSL program from the shaders
   programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
@@ -1164,7 +1417,7 @@ void initGL (GLFWwindow* window, int width, int height)
   reshapeWindow (window, width, height);
 
     // Background color of the scene
-  glClearColor (0.3f, 0.3f, 0.3f, 0.0f); // R, G, B, A
+  glClearColor (0.0f, 0.0f, 0.0f, 0.0f); // R, G, B, A
   glClearDepth (1.0f);
 
   glEnable (GL_DEPTH_TEST);
@@ -1199,13 +1452,17 @@ int main (int argc, char** argv)
         // Poll for Keyboard and mouse events
         glfwPollEvents();
 
+        createGame();
         checkGameStatus(window);
+        updateGameStatus();
+        getCurrIndex();
 
         // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
         current_time = glfwGetTime(); // Time in seconds
 
-        if ((current_time - last_update_time) >= 1.5) { // atleast 0.5s elapsed since last frame
+        if ((current_time - last_update_time) >= 1.0) { // atleast 0.5s elapsed since last frame
             // do something every 0.5 seconds ..
+            //updateClock();
             last_update_time = current_time;
         }
     }
@@ -1214,3 +1471,4 @@ int main (int argc, char** argv)
 //    exit(EXIT_SUCCESS);
 }
 
+   
