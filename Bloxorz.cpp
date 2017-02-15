@@ -516,7 +516,7 @@ double mouse_xpos, mouse_ypos;
 
 float currAxis[3], DYING_inc, DYING_rot, prev_mouse_x, prev_mouse_y;
 
-bool change_level, Y_NEG, Y_POS, X_NEG, X_POS;
+bool change_level, Y_NEG, Y_POS, X_NEG, X_POS, vert_fall;
 
 float target_mouse_x, target_mouse_y;
 
@@ -1180,6 +1180,15 @@ bool isOnTile(int i, int j) {
     return 0;
 }
 
+string getCurrBlock () {
+  int i;
+  for(i=0;i<3;i++) {
+    if(block[i].status) {
+      return(block[i].name);
+    }
+  }
+}
+
 /* Render the scene with openGL */
 /* Edit this function according to your assignment */
 void draw (GLFWwindow* window, bool draw_screen)
@@ -1189,7 +1198,7 @@ void draw (GLFWwindow* window, bool draw_screen)
   camera_rotation_angle=90;
 
   glClearColor (0.0f, 0.0f, 0.0f, 0.0f); // R, G, B, A
-    glClearDepth (1.0f);
+  glClearDepth (1.0f);
   // Eye - Location of camera. Don't change unless you are sure!!
   // glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f)-1, -1, 5*sin(camera_rotation_angle*M_PI/180.0f-1) );
   // Target - Where is the camera looking at.  Don't change unless you are sure!!
@@ -1249,13 +1258,13 @@ void draw (GLFWwindow* window, bool draw_screen)
     }
     else if(block_view) {
       if(getAxis() == "x") {
-        glm::vec3 eye(currX-2, currY, 4);
+        glm::vec3 eye(currX-1.5, currY, 3.5);
         glm::vec3 up (0, 0, 1);
         glm::vec3 target (currX+0.4*10, currY, 1);
         Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
       }
       else {
-        glm::vec3 eye(currX, currY-2, 4);
+        glm::vec3 eye(currX, currY-1.5, 3.5);
         glm::vec3 up (0, 0, 1);
         glm::vec3 target (currX, currY+0.4*10, 1);
         Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
@@ -1263,13 +1272,13 @@ void draw (GLFWwindow* window, bool draw_screen)
     }
     else if(front_view){
       if(getAxis() == "x") {
-        glm::vec3 eye(currX+0.4, currY, 2);
+        glm::vec3 eye(currX+0.4, currY, 1.5);
         glm::vec3 up (0, 0, 1);
         glm::vec3 target (currX+0.4*5, currY, 0);
         Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
       }
       else {
-        glm::vec3 eye(currX, currY+0.4, 2);
+        glm::vec3 eye(currX, currY+0.4, 1.5);
         glm::vec3 up (0, 0, 1);
         glm::vec3 target (currX, currY+0.4*5, 0);
         Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
@@ -1299,7 +1308,7 @@ void draw (GLFWwindow* window, bool draw_screen)
     for(i=0;i<3;i++) {
       if(block[i].status) {
         Matrices.model = glm::mat4(1.0f);
-        if(DYING) {
+        if(DYING&&!vert_fall) {
           if(Y_NEG) {
             block[i].rotate_angle_y -= DYING_rot;
           }
@@ -1616,6 +1625,13 @@ class Level {
       tiles[9][9].create(0, 1, 1);
       tiles[9][0].create(1, 0, 0);
       tiles[4][7].create(1, 0, 0);
+      tiles[2][2].create(0, 1, 0);
+      tiles[2][3].create(0, 1, 0);
+      tiles[3][2].create(0, 1, 0);
+      tiles[2][2].create(0, 1, 0);
+      tiles[2][3].create(0, 1, 0);
+      tiles[3][3].create(0, 1, 0);
+      tiles[1][2].create(0, 1, 0);
 
       for(i=4;i<9;i++)
         tiles[0][i].create(0, 0, 1);
@@ -1705,7 +1721,17 @@ void updateGameStatus() {
     for(j=0;j<10;j++) {
       if(tiles[i][j].status) {
         if(tiles[i][j].is_finish) {
-          if(abs(currX-tiles[i][j].x)<0.1&&abs(currY-tiles[i][j].y)<0.1) {
+          if(isOnTile(i, j)) {
+            if(!DYING) {
+              currLevel++;
+              vert_fall=1;
+              DYING=1;
+            }
+          }
+        }
+        if(tiles[i][j].is_fragile) {
+          if(isOnTile(i, j)) {
+            vert_fall=1;
             DYING=1;
           }
         }
@@ -1738,20 +1764,21 @@ void changePos(float X, float Y, string axis) {
 
 void createGame() {
   if(change_level) {
-  block[0].create(0.4, 0.4, 0.8, "z");
-  block[1].create(0.4, 0.8, 0.4, "y");
-  block[2].create(0.8, 0.4, 0.4, "x");
-  changePos(0.4*1, 0.4*1, "z");
-  target_mouse_x=0.4*5;
-  target_mouse_y=0.4*5;
-  DYING=0;
-  DYING_inc=0;
-  DYING_rot=3;
-  X_POS=0;
-  X_NEG=0;
-  Y_POS=0;
-  Y_NEG=0;
-  mouse_hit=0;
+    block[0].create(0.4, 0.4, 0.8, "z");
+    block[1].create(0.4, 0.8, 0.4, "y");
+    block[2].create(0.8, 0.4, 0.4, "x");
+    changePos(0.4*1, 0.4*1, "z");
+    vert_fall=0;
+    target_mouse_x=0.4*5;
+    target_mouse_y=0.4*5;
+    DYING=0;
+    DYING_inc=0;
+    DYING_rot=3;
+    X_POS=0;
+    X_NEG=0;
+    Y_POS=0;
+    Y_NEG=0;
+    mouse_hit=0;
     switch (currLevel) {
       case 1:
         levels.create_level_1();
@@ -1879,6 +1906,7 @@ void initGL (GLFWwindow* window, int width, int height)
   currLevel=1;
 
   updateClock();
+  createGame();
   
   // Create and compile our GLSL program from the shaders
   programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
@@ -1964,15 +1992,14 @@ int main (int argc, char** argv)
 
         /* decode and play */
         if (mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK)
+
             ao_play(dev, (char*)buffer, done);
         else mpg123_seek(mh, 0, SEEK_SET); // loop audio from start again if ended
 
-        createGame();
         checkGameStatus(window);
         updateGameStatus();
         getCurrIndex();
-        // playmusic();
-        // printf("%f %f\n", getMouseCoordX(), getMouseCoordY());
+        createGame();
 
         // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
         current_time = glfwGetTime(); // Time in seconds
