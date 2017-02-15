@@ -255,23 +255,13 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
     int fbwidth=width, fbheight=height;
     /* With Retina display on Mac OS X, GLFW's FramebufferSize
      is different from WindowSize */
-    glfwGetFramebufferSize(window, &fbwidth, &fbheight);
-
-  GLfloat fov = M_PI/2;
-
-  // sets the viewport of openGL renderer
-  glViewport (0, 0, (GLsizei) fbwidth, (GLsizei) fbheight);
+    //glfwGetFramebufferSize(window, &fbwidth, &fbheight);
 
   // set the projection matrix as perspective
   /* glMatrixMode (GL_PROJECTION);
      glLoadIdentity ();
      gluPerspective (fov, (GLfloat) fbwidth / (GLfloat) fbheight, 0.1, 500.0); */
   // Store the projection matrix in a variable for future use
-    // Perspective projection for 3D views
-     Matrices.projection = glm::perspective (fov, (GLfloat) fbwidth / (GLfloat) fbheight, 0.1f, 500.0f);
-
-    // Ortho projection for 2D views
-    //Matrices.projection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.1f, 500.0f);
 }
 
 VAO *triangle, *rectangle;
@@ -579,6 +569,273 @@ void playmusic() {
     
 }
 
+class SevenSegment {
+   public:
+      float x;
+      float y;
+      float y_shift;
+      float x_shift;
+      float length;
+      float width;
+      VAO *a, *b, *c, *d, *e, *f, *g;
+      bool A, B, C, D, E, F, G;
+
+      void create (float X_SHIFT, float Y_SHIFT, int number) {
+
+        this->x_shift = X_SHIFT;
+        this->y_shift = Y_SHIFT;
+        this->A=1; this->B=1; this->C=1; this->D=1; this->E=1; this->F=1; this->G=1;
+
+        float x_coord, y_coord, red=0.5, blue=0, green=0, x_shift, y_shift;
+
+        if(number > 10 || number < 0 ) 
+          return;
+
+        switch(number){
+          case 0:
+            this->G=0;
+            break; //optional
+          case 1:
+            this->G=0;
+            this->F=0;
+            this->E=0;
+            this->A=0;
+            this->D=0;
+            break; //optional
+          case 2:
+            this->F=0;
+            this->C=0;
+            break; //optional
+          case 3:
+            this->F=0;
+            this->E=0;
+            break; //optional
+          case 4:
+            this->A=0;
+            this->E=0;
+            this->D=0;
+            break; //optional
+          case 5:
+            this->B=0;
+            this->E=0;
+            break; //optional
+          case 6:
+            this->B=0;
+            break; //optional
+          case 7:
+            this->G=0;
+            this->E=0;
+            this->F=0;
+            this->D=0;
+            break; //optional
+          case 8:
+            break; //optional
+          case 9:
+            this->E=0;
+            break; //optional
+        }
+        
+        if(this->G) {
+          y_shift = 0, x_coord=0.09, y_coord=0.04, x_shift=0;
+
+          GLfloat vertex_buffer_data_g [] = {
+            -x_coord+x_shift,-y_coord+y_shift,0, // vertex 1
+            -x_coord+x_shift,y_coord+y_shift,0, // vertex 2
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+            x_coord+x_shift,-y_coord+y_shift,0, // vertex 4
+            -x_coord+x_shift,-y_coord+y_shift,0  // vertex 1
+          };
+
+          GLfloat color_buffer_data_g [] = {
+            red,green,blue, // color 1
+            red,green,blue, // color 2
+            red,green,blue, // color 3
+
+            red,green,blue, // color 3
+            red,green,blue, // color 4
+            red,green,blue  // color 1
+          };
+
+          G = 1;
+          this->g = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data_g, color_buffer_data_g, GL_FILL);
+        }
+
+        if(this->A) {
+          y_shift = 0.25, x_coord=0.09, y_coord=0.04, x_shift=0;
+
+          GLfloat vertex_buffer_data_a [] = {
+            -x_coord+x_shift,-y_coord+y_shift,0, // vertex 1
+            -x_coord+x_shift,y_coord+y_shift,0, // vertex 2
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+            x_coord+x_shift,-y_coord+y_shift,0, // vertex 4
+            -x_coord+x_shift,-y_coord+y_shift,0  // vertex 1
+          };
+
+          GLfloat color_buffer_data_a [] = {
+            red,green,blue, // color 1
+            red,green,blue, // color 2
+            red,green,blue, // color 3
+
+            red,green,blue, // color 3
+            red,green,blue, // color 4
+            red,green,blue  // color 1
+          };
+
+          A = 1;
+          this->a = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data_a, color_buffer_data_a, GL_FILL);
+        }
+
+        if(this->D) {
+          x_coord=0.09, y_coord=0.04, x_shift=0, y_shift = -0.25;
+
+          GLfloat vertex_buffer_data_d [] = {
+            -x_coord+x_shift,-y_coord+y_shift,0, // vertex 1
+            -x_coord+x_shift,y_coord+y_shift,0, // vertex 2
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+            x_coord+x_shift,-y_coord+y_shift,0, // vertex 4
+            -x_coord+x_shift,-y_coord+y_shift,0  // vertex 1
+          };
+
+          GLfloat color_buffer_data_d [] = {
+            red,green,blue, // color 1
+            red,green,blue, // color 2
+            red,green,blue, // color 3
+
+            red,green,blue, // color 3
+            red,green,blue, // color 4
+            red,green,blue  // color 1
+          };
+
+          D = 1;
+          this->d = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data_d, color_buffer_data_d, GL_FILL);
+        }
+
+        if(this->C) {
+          x_shift = 0.11, x_coord=0.025, y_coord=0.12, y_shift=-0.12;
+
+          GLfloat vertex_buffer_data_c [] = {
+            -x_coord+x_shift,-y_coord+y_shift,0, // vertex 1
+            -x_coord+x_shift,y_coord+y_shift,0, // vertex 2
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+            x_coord+x_shift,-y_coord+y_shift,0, // vertex 4
+            -x_coord+x_shift,-y_coord+y_shift,0  // vertex 1
+          };
+
+          GLfloat color_buffer_data_c [] = {
+            red,green,blue, // color 1
+            red,green,blue, // color 2
+            red,green,blue, // color 3
+
+            red,green,blue, // color 3
+            red,green,blue, // color 4
+            red,green,blue  // color 1
+          };
+
+          C = 1;
+          this->c = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data_c, color_buffer_data_c, GL_FILL);
+        }
+
+        
+        if(this->B) {
+          x_shift = 0.11, x_coord=0.025, y_coord=0.12, y_shift=0.12;
+
+          GLfloat vertex_buffer_data_b [] = {
+            -x_coord+x_shift,-y_coord+y_shift,0, // vertex 1
+            -x_coord+x_shift,y_coord+y_shift,0, // vertex 2
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+            x_coord+x_shift,-y_coord+y_shift,0, // vertex 4
+            -x_coord+x_shift,-y_coord+y_shift,0  // vertex 1
+          };
+
+          GLfloat color_buffer_data_b [] = {
+            red,green,blue, // color 1
+            red,green,blue, // color 2
+            red,green,blue, // color 3
+
+            red,green,blue, // color 3
+            red,green,blue, // color 4
+            red,green,blue  // color 1
+          };
+
+          B = 1;
+          this->b = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data_b, color_buffer_data_b, GL_FILL);
+        }
+
+        if(this->E) {
+          x_shift = -0.11, x_coord=0.025, y_coord=0.12, y_shift=-0.12;
+
+          GLfloat vertex_buffer_data_e [] = {
+            -x_coord+x_shift,-y_coord+y_shift,0, // vertex 1
+            -x_coord+x_shift,y_coord+y_shift,0, // vertex 2
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+            x_coord+x_shift,-y_coord+y_shift,0, // vertex 4
+            -x_coord+x_shift,-y_coord+y_shift,0  // vertex 1
+          };
+
+          GLfloat color_buffer_data_e [] = {
+            red,green,blue, // color 1
+            red,green,blue, // color 2
+            red,green,blue, // color 3
+
+            red,green,blue, // color 3
+            red,green,blue, // color 4
+            red,green,blue  // color 1
+          };
+
+          E = 1;
+          this->e = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data_e, color_buffer_data_e, GL_FILL);
+        }
+
+        if(this->F) {
+          x_shift = -0.11, x_coord=0.025, y_coord=0.12, y_shift=0.12;
+
+          GLfloat vertex_buffer_data_f [] = {
+            -x_coord+x_shift,-y_coord+y_shift,0, // vertex 1
+            -x_coord+x_shift,y_coord+y_shift,0, // vertex 2
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+
+            x_coord+x_shift,y_coord+y_shift,0, // vertex 3
+            x_coord+x_shift,-y_coord+y_shift,0, // vertex 4
+            -x_coord+x_shift,-y_coord+y_shift,0  // vertex 1
+          };
+
+          GLfloat color_buffer_data_f [] = {
+            red,green,blue, // color 1
+            red,green,blue, // color 2
+            red,green,blue, // color 3
+
+            red,green,blue, // color 3
+            red,green,blue, // color 4
+            red,green,blue  // color 1
+          };
+
+          F = 1;
+          this->f = create3DObject(GL_TRIANGLES, 6, vertex_buffer_data_f, color_buffer_data_f, GL_FILL);
+        }
+      }
+};
+
+SevenSegment score_board[4];
+
+void updateScore (float x, float y) {
+  if((total_score/100)==0) {
+    score_board[0].create(x, y, total_score%10);
+    score_board[1].create(x-0.3, y, total_score/10);
+  }
+}
+
 class Tiles {
   public:
     VAO* body;
@@ -716,7 +973,8 @@ class Block {
 
     void revolve_block(string move) {
       if(!this->rotate_status) {
-        //updateScore();
+        total_score++;
+        updateScore(-3, 0);
         if(this->standing)
           this->standing=0;
         else
@@ -924,150 +1182,267 @@ bool isOnTile(int i, int j) {
 
 /* Render the scene with openGL */
 /* Edit this function according to your assignment */
-void draw ()
+void draw (GLFWwindow* window, bool draw_screen)
 {
-  // clear the color and depth in the frame buffer
-  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  // use the loaded shader program
-  // Don't change unless you know what you are doing
-  glUseProgram (programID);
+  GLfloat fov = M_PI/2;
 
   camera_rotation_angle=90;
+
+  glClearColor (0.0f, 0.0f, 0.0f, 0.0f); // R, G, B, A
+    glClearDepth (1.0f);
   // Eye - Location of camera. Don't change unless you are sure!!
-  //glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f)-1, -1, 5*sin(camera_rotation_angle*M_PI/180.0f-1) );
+  // glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f)-1, -1, 5*sin(camera_rotation_angle*M_PI/180.0f-1) );
   // Target - Where is the camera looking at.  Don't change unless you are sure!!
   // Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
-  float mouse_change_x, mouse_change_y;
 
-  if(mouse_hit) {
-    top_view=1;
-    tower_view=0;
-    level_view=0;
-    block_view=0;
-    front_view=0;
-    mouse_change_x=changeMouseInX();
-    mouse_change_y=changeMouseInY();
-    target_mouse_x+=mouse_change_x;
-    target_mouse_y+=mouse_change_y;
-  }
+    //glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  if(top_view) {
-    glm::vec3 eye(0.4*5, 0.4*5, 5+mouse_yoffset);
-    glm::vec3 up (0, 1, 0);
-    glm::vec3 target (target_mouse_x, target_mouse_y, 0);
-    Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
-  }
-  else if(tower_view) {
-    glm::vec3 eye(-1, -1, 4);
-    glm::vec3 up (1, 1, 0);
-    glm::vec3 target (0.4*5, 0.4*5, 0);
-    Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
-  }
-  else if(level_view) {
-    glm::vec3 eye(0.4*5, -0.4*5, 2);
-    glm::vec3 up (0, 1, 0);
-    glm::vec3 target (0.4*5, 0.4*5, 0);
-    Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
-  }
-  else if(block_view) {
-    if(getAxis() == "x") {
-      glm::vec3 eye(currX-2, currY, 4);
-      glm::vec3 up (0, 0, 1);
-      glm::vec3 target (currX+0.4*10, currY, 1);
+  if(draw_screen) {
+
+    // clear the color and depth in the frame buffer
+    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // use the loaded shader program
+    // Don't change unless you know what you are doing
+    glUseProgram (programID);
+
+    int window_width=800, window_height=(0.8*600);
+
+    glfwGetFramebufferSize(window, &window_width, &window_height);
+
+    glViewport (0, 0, (GLsizei) 800, (GLsizei) (0.8*600));
+
+    // Perspective projection for 3D views
+    Matrices.projection = glm::perspective (fov, (GLfloat) (800) / (GLfloat) (0.8*600), 0.1f, 500.0f);
+
+    float mouse_change_x, mouse_change_y;
+
+    if(mouse_hit) {
+      top_view=1;
+      tower_view=0;
+      level_view=0;
+      block_view=0;
+      front_view=0;
+      mouse_change_x=changeMouseInX();
+      mouse_change_y=changeMouseInY();
+      target_mouse_x+=mouse_change_x;
+      target_mouse_y+=mouse_change_y;
+    }
+
+    if(top_view) {
+      glm::vec3 eye(0.4*5, 0.4*5, 5+mouse_yoffset);
+      glm::vec3 up (0, 1, 0);
+      glm::vec3 target (target_mouse_x, target_mouse_y, 0);
       Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
     }
-    else {
-      glm::vec3 eye(currX, currY-2, 4);
-      glm::vec3 up (0, 0, 1);
-      glm::vec3 target (currX, currY+0.4*10, 1);
+    else if(tower_view) {
+      glm::vec3 eye(-1, -1, 4);
+      glm::vec3 up (1, 1, 0);
+      glm::vec3 target (0.4*5, 0.4*5, 0);
       Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
     }
-  }
-  else if(front_view){
-    if(getAxis() == "x") {
-      glm::vec3 eye(currX+0.4, currY, 2);
-      glm::vec3 up (0, 0, 1);
-      glm::vec3 target (currX+0.4*5, currY, 0);
+    else if(level_view) {
+      glm::vec3 eye(0.4*5, -0.4*5, 2);
+      glm::vec3 up (0, 1, 0);
+      glm::vec3 target (0.4*5, 0.4*5, 0);
       Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
     }
-    else {
-      glm::vec3 eye(currX, currY+0.4, 2);
-      glm::vec3 up (0, 0, 1);
-      glm::vec3 target (currX, currY+0.4*5, 0);
-      Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
-    }
-  }
-
-  // Compute Camera matrix (view)
-  //Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
-  //  Don't change unless you are sure!!
-  //Matrices.view = glm::lookAt(glm::vec3(-1,-1,1), glm::vec3(0,0,0), glm::vec3(1,1,2)); // Fixed camera for 2D (ortho) in XY plane
-
-  // Compute ViewProject matrix as view/camera might not be changed for this frame (basic scenario)
-  //  Don't change unless you are sure!!
-  glm::mat4 VP = Matrices.projection * Matrices.view;
-
-  // Send our tr\ansformation to the currently bound shader, in the "MVP" uniform
-  // For each model you render, since the MVP will be different (at least the M part)
-  //  Don't change unless you are sure!!
-  glm::mat4 MVP;  // MVP = Projection * View * Model
-
-  // Load identity to model matrix
-  Matrices.model = glm::mat4(1.0f);
-
-  /* Render your scene */
-  int i, j;
-
-  for(i=0;i<3;i++) {
-    if(block[i].status) {
-      Matrices.model = glm::mat4(1.0f);
-      if(DYING) {
-        if(Y_NEG) {
-          block[i].rotate_angle_y -= DYING_rot;
-        }
-        else if(X_POS) {
-          block[i].rotate_angle_x += DYING_rot;
-        }
-        else if(Y_POS) {
-          block[i].rotate_angle_y += DYING_rot;
-        }
-        else if(X_NEG) {
-          block[i].rotate_angle_x -= DYING_rot;
-        }
+    else if(block_view) {
+      if(getAxis() == "x") {
+        glm::vec3 eye(currX-2, currY, 4);
+        glm::vec3 up (0, 0, 1);
+        glm::vec3 target (currX+0.4*10, currY, 1);
+        Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
       }
-      glm::mat4 translateBlock = glm::translate (glm::vec3(block[i].x, block[i].y, block[i].z-DYING_inc));        // glTranslatef
-      glm::mat4 rotateBlockX = glm::rotate((float)(block[i].rotate_angle_x*M_PI/180.0f), glm::vec3(1,0,0));
-      glm::mat4 rotateBlockY = glm::rotate((float)(block[i].rotate_angle_y*M_PI/180.0f), glm::vec3(0,1,0));
-      Matrices.model *= (block[i].invTempTranslate*translateBlock*rotateBlockX*rotateBlockY*block[i].tempTranslate);
-      MVP = VP * Matrices.model;
-      glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-      draw3DObject(block[i].body);
+      else {
+        glm::vec3 eye(currX, currY-2, 4);
+        glm::vec3 up (0, 0, 1);
+        glm::vec3 target (currX, currY+0.4*10, 1);
+        Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+      }
     }
-  }
+    else if(front_view){
+      if(getAxis() == "x") {
+        glm::vec3 eye(currX+0.4, currY, 2);
+        glm::vec3 up (0, 0, 1);
+        glm::vec3 target (currX+0.4*5, currY, 0);
+        Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+      }
+      else {
+        glm::vec3 eye(currX, currY+0.4, 2);
+        glm::vec3 up (0, 0, 1);
+        glm::vec3 target (currX, currY+0.4*5, 0);
+        Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+      }
+    }
 
-  rotate_block();
+    // Compute Camera matrix (view)
+    //Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+    //  Don't change unless you are sure!!
+    //Matrices.view = glm::lookAt(glm::vec3(-1,-1,1), glm::vec3(0,0,0), glm::vec3(1,1,2)); // Fixed camera for 2D (ortho) in XY plane
 
-  if(DYING != 0) {
-    DYING_inc+=0.08;
-  }
+    // Compute ViewProject matrix as view/camera might not be changed for this frame (basic scenario)
+    //  Don't change unless you are sure!!
+    glm::mat4 VP = Matrices.projection * Matrices.view;
 
-  glm::mat4 translateTile;
-    
-  for(i=0;i<10;i++) {
-    for(j=0;j<10;j++) {
-      if(tiles[i][j].status) {
+    // Send our tr\ansformation to the currently bound shader, in the "MVP" uniform
+    // For each model you render, since the MVP will be different (at least the M part)
+    //  Don't change unless you are sure!!
+    glm::mat4 MVP;  // MVP = Projection * View * Model
+
+    // Load identity to model matrix
+    Matrices.model = glm::mat4(1.0f);
+
+    /* Render your scene */
+    int i, j;
+
+    for(i=0;i<3;i++) {
+      if(block[i].status) {
         Matrices.model = glm::mat4(1.0f);
-        translateTile = glm::translate (glm::vec3(tiles[i][j].x, tiles[i][j].y, 0));        // glTranslatef
-        Matrices.model *= (translateTile);
+        if(DYING) {
+          if(Y_NEG) {
+            block[i].rotate_angle_y -= DYING_rot;
+          }
+          else if(X_POS) {
+            block[i].rotate_angle_x += DYING_rot;
+          }
+          else if(Y_POS) {
+            block[i].rotate_angle_y += DYING_rot;
+          }
+          else if(X_NEG) {
+            block[i].rotate_angle_x -= DYING_rot;
+          }
+        }
+        glm::mat4 translateBlock = glm::translate (glm::vec3(block[i].x, block[i].y, block[i].z-DYING_inc));        // glTranslatef
+        glm::mat4 rotateBlockX = glm::rotate((float)(block[i].rotate_angle_x*M_PI/180.0f), glm::vec3(1,0,0));
+        glm::mat4 rotateBlockY = glm::rotate((float)(block[i].rotate_angle_y*M_PI/180.0f), glm::vec3(0,1,0));
+        Matrices.model *= (block[i].invTempTranslate*translateBlock*rotateBlockX*rotateBlockY*block[i].tempTranslate);
         MVP = VP * Matrices.model;
         glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-        draw3DObject(tiles[i][j].body);
+        draw3DObject(block[i].body);
+      }
+    }
 
-        if(tiles[i][j].is_switch) {
-          draw3DObject(tiles[i][j].line_1);
-          draw3DObject(tiles[i][j].line_2);
+    rotate_block();
+
+    if(DYING != 0) {
+      DYING_inc+=0.08;
+    }
+
+    glm::mat4 translateTile;
+      
+    for(i=0;i<10;i++) {
+      for(j=0;j<10;j++) {
+        if(tiles[i][j].status) {
+          Matrices.model = glm::mat4(1.0f);
+          translateTile = glm::translate (glm::vec3(tiles[i][j].x, tiles[i][j].y, 0));        // glTranslatef
+          Matrices.model *= (translateTile);
+          MVP = VP * Matrices.model;
+          glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+          draw3DObject(tiles[i][j].body);
+
+          if(tiles[i][j].is_switch) {
+            draw3DObject(tiles[i][j].line_1);
+            draw3DObject(tiles[i][j].line_2);
+          }
         }
+      }
+    }
+  }
+  else {
+
+    //glClearColor (1.0f, 1.0f, 1.0f, 0.0f); // R, G, B, A
+    //glClearDepth (1.0f);
+
+    // clear the color and depth in the frame buffer
+    // glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // use the loaded shader program
+    // Don't change unless you know what you are doing
+
+    int window_width, window_height;
+
+    glfwGetFramebufferSize(window, &window_width, &window_height);
+    // sets the viewport of openGL renderer
+    glViewport (0, (int)(0.8*window_height), (int)(window_width), (int)(0.2*window_height));
+
+    // Ortho projection for 2D views
+    Matrices.projection = glm::ortho(-4.0f, 4.0f, -0.7f, 0.7f, 0.1f, 500.0f);
+
+    // Compute Camera matrix (view)
+    //Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+    //  Don't change unless you are sure!!
+    Matrices.view = glm::lookAt(glm::vec3(0,0,3), glm::vec3(0,0,0), glm::vec3(0,1,0)); // Fixed camera for 2D (ortho) in XY plane
+
+    // Compute ViewProject matrix as view/camera might not be changed for this frame (basic scenario)
+    //  Don't change unless you are sure!!
+    glm::mat4 VP = Matrices.projection * Matrices.view;
+
+    // Send our tr\ansformation to the currently bound shader, in the "MVP" uniform
+    // For each model you render, since the MVP will be different (at least the M part)
+    //  Don't change unless you are sure!!
+    glm::mat4 MVP;  // MVP = Projection * View * Model
+
+    glUseProgram (programID);
+
+    int i;
+
+    for(i=0;i<4;i++) {
+      if(score_board[i].A) {
+        Matrices.model = glm::mat4(1.0f);
+        glm::mat4 translateA = glm::translate (glm::vec3(score_board[i].x_shift, score_board[i].y_shift, 0));
+        Matrices.model *= (translateA);
+        MVP = VP * Matrices.model;
+        glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        draw3DObject(score_board[i].a);
+      }
+      if(score_board[i].B) {
+        Matrices.model = glm::mat4(1.0f);
+        glm::mat4 translateB = glm::translate (glm::vec3(score_board[i].x_shift, score_board[i].y_shift, 0));
+        Matrices.model *= (translateB);
+        MVP = VP * Matrices.model;
+        glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        draw3DObject(score_board[i].b);
+      }
+      if(score_board[i].C) {
+        Matrices.model = glm::mat4(1.0f);
+        glm::mat4 translateC = glm::translate (glm::vec3(score_board[i].x_shift, score_board[i].y_shift, 0));
+        Matrices.model *= (translateC);
+        MVP = VP * Matrices.model;
+        glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        draw3DObject(score_board[i].c);
+      }
+      if(score_board[i].D) {
+        Matrices.model = glm::mat4(1.0f);
+        glm::mat4 translateD = glm::translate (glm::vec3(score_board[i].x_shift, score_board[i].y_shift, 0));
+        Matrices.model *= (translateD);
+        MVP = VP * Matrices.model;
+        glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        draw3DObject(score_board[i].d);
+      }
+      if(score_board[i].E) {
+        Matrices.model = glm::mat4(1.0f);
+        glm::mat4 translateE = glm::translate (glm::vec3(score_board[i].x_shift, score_board[i].y_shift, 0));
+        Matrices.model *= (translateE);
+        MVP = VP * Matrices.model;
+        glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        draw3DObject(score_board[i].e);
+      }
+      if(score_board[i].F) {
+        Matrices.model = glm::mat4(1.0f);
+        glm::mat4 translateF = glm::translate (glm::vec3(score_board[i].x_shift, score_board[i].y_shift, 0));
+        Matrices.model *= (translateF);
+        MVP = VP * Matrices.model;
+        glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        draw3DObject(score_board[i].f);
+      }
+      if(score_board[i].G) {
+        Matrices.model = glm::mat4(1.0f);
+        glm::mat4 translateG = glm::translate (glm::vec3(score_board[i].x_shift, score_board[i].y_shift, 0));
+        Matrices.model *= (translateG);
+        MVP = VP * Matrices.model;
+        glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        draw3DObject(score_board[i].g);
       }
     }
   }
@@ -1315,7 +1690,16 @@ class Level {
 
 Level levels;
 
+void updateClock () {
+  total_time++;
+  score_board[2].create(3+0.3, 0, total_time%10);
+  score_board[3].create(3, 0, total_time/10);
+}
+
 void updateGameStatus() {
+
+  updateScore (-3, 0);
+
   int i, j;
   for(i=0;i<10;i++) {
     for(j=0;j<10;j++) {
@@ -1473,6 +1857,10 @@ void initGL (GLFWwindow* window, int width, int height)
   currAxis[1]=1;
   currAxis[2]=0;
 
+  updateScore (-3, 0);
+
+  total_score=0;
+
   TIME_X=0;
   TIME_Y=-2;
   TIME_Z=0;
@@ -1489,6 +1877,8 @@ void initGL (GLFWwindow* window, int width, int height)
 
   change_level=1;
   currLevel=1;
+
+  updateClock();
   
   // Create and compile our GLSL program from the shaders
   programID = LoadShaders( "Sample_GL.vert", "Sample_GL.frag" );
@@ -1559,7 +1949,8 @@ int main (int argc, char** argv)
     while (!glfwWindowShouldClose(window)) {
 
         // OpenGL Draw commands
-        draw();
+        draw(window, 1);
+        draw(window, 0);
 
         // Swap Frame Buffer in double buffering
         glfwSwapBuffers(window);
@@ -1572,11 +1963,9 @@ int main (int argc, char** argv)
         glfwSetScrollCallback(window, scroll_callback);
 
         /* decode and play */
-        /*
         if (mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK)
             ao_play(dev, (char*)buffer, done);
         else mpg123_seek(mh, 0, SEEK_SET); // loop audio from start again if ended
-        */
 
         createGame();
         checkGameStatus(window);
@@ -1590,7 +1979,7 @@ int main (int argc, char** argv)
 
         if ((current_time - last_update_time) >= 1.0) { // atleast 0.5s elapsed since last frame
             // do something every 0.5 seconds ..
-            //updateClock();
+            updateClock();
             last_update_time = current_time;
         }
     }
