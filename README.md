@@ -27,3 +27,10 @@ Arrow keys for the movement of the block
 ## AIM
 
 Use as less moves as possible (displayed on the upper left corner) and as less time as possible (displayed on the upper right corner)
+
+## Extra Features
+
+1. Play background music
+2. Split viewports and display score/time
+3. Different levels
+4. Smooth animations of block movement (falling over, falling inside)
