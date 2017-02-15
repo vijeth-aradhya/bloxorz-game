@@ -209,7 +209,7 @@ void draw3DObject (struct VAO* vao)
 float triangle_rot_dir = 1;
 float rectangle_rot_dir = 1;
 bool triangle_rot_status = true;
-bool rectangle_rot_status = true;
+bool rectangle_rot_status = true, mouse_hit;
 
 /* Executed for character input (like in text boxes) */
 void keyboardChar (GLFWwindow* window, unsigned int key)
@@ -229,8 +229,13 @@ void mouseButton (GLFWwindow* window, int button, int action, int mods)
 {
     switch (button) {
         case GLFW_MOUSE_BUTTON_LEFT:
-            if (action == GLFW_RELEASE)
-                triangle_rot_dir *= -1;
+            if (action == GLFW_PRESS) {
+              mouse_hit=1;
+            }
+            if (action == GLFW_RELEASE) {
+              triangle_rot_dir *= -1;
+              mouse_hit=0;
+            }
             break;
         case GLFW_MOUSE_BUTTON_RIGHT:
             if (action == GLFW_RELEASE) {
@@ -517,9 +522,40 @@ void createCuboid(float length, float width, float height, VAO** cuboid, bool bl
 
 int total_time, total_score, DYING;
 
-float currAxis[3], DYING_inc, DYING_rot;
+double mouse_xpos, mouse_ypos;
+
+float currAxis[3], DYING_inc, DYING_rot, prev_mouse_x, prev_mouse_y;
 
 bool change_level, Y_NEG, Y_POS, X_NEG, X_POS;
+
+float target_mouse_x, target_mouse_y;
+
+double mouse_xoffset, mouse_yoffset;
+
+float getMouseCoordX () {
+  return (((mouse_xpos+4)/800*8)-4);
+}
+
+float getMouseCoordY () {
+  return (((600-mouse_ypos+4)/600*8)-4);
+}
+
+float changeMouseInX () {
+  float diff=(getMouseCoordX()-prev_mouse_x);
+  prev_mouse_x=getMouseCoordX();
+  return(diff);
+}
+
+float changeMouseInY () {
+  float diff=(getMouseCoordY()-prev_mouse_y);
+  prev_mouse_y=getMouseCoordY();
+  return(diff);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+  mouse_xoffset=xoffset;
+  mouse_yoffset=yoffset;
+}
 
 string getAxis() {
   if(currAxis[0]==1.0)
@@ -902,11 +938,24 @@ void draw ()
   //glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f)-1, -1, 5*sin(camera_rotation_angle*M_PI/180.0f-1) );
   // Target - Where is the camera looking at.  Don't change unless you are sure!!
   // Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
+  float mouse_change_x, mouse_change_y;
+
+  if(mouse_hit) {
+    top_view=1;
+    tower_view=0;
+    level_view=0;
+    block_view=0;
+    front_view=0;
+    mouse_change_x=changeMouseInX();
+    mouse_change_y=changeMouseInY();
+    target_mouse_x+=mouse_change_x;
+    target_mouse_y+=mouse_change_y;
+  }
 
   if(top_view) {
-    glm::vec3 eye(0.4*5, 0.4*5, 5);
+    glm::vec3 eye(0.4*5, 0.4*5, 5+mouse_yoffset);
     glm::vec3 up (0, 1, 0);
-    glm::vec3 target (0.4*5, 0.4*5, 0);
+    glm::vec3 target (target_mouse_x, target_mouse_y, 0);
     Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
   }
   else if(tower_view) {
@@ -1112,6 +1161,8 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
                 break;
             case GLFW_KEY_U:
                 top_view=1;
+                target_mouse_x=0.4*5;
+                target_mouse_y=0.4*5;
                 tower_view=0;
                 level_view=0;
                 block_view=0;
@@ -1307,6 +1358,8 @@ void createGame() {
   block[1].create(0.4, 0.8, 0.4, "y");
   block[2].create(0.8, 0.4, 0.4, "x");
   changePos(0.4*1, 0.4*1, "z");
+  target_mouse_x=0.4*5;
+  target_mouse_y=0.4*5;
   DYING=0;
   DYING_inc=0;
   DYING_rot=3;
@@ -1314,6 +1367,7 @@ void createGame() {
   X_NEG=0;
   Y_POS=0;
   Y_NEG=0;
+  mouse_hit=0;
     switch (currLevel) {
       case 1:
         levels.create_level_1();
@@ -1459,7 +1513,7 @@ void initGL (GLFWwindow* window, int width, int height)
 
 int main (int argc, char** argv)
 {
-  int width = 600;
+  int width = 800;
   int height = 600;
 
     GLFWwindow* window = initGLFW(width, height);
@@ -1513,18 +1567,23 @@ int main (int argc, char** argv)
         // Poll for Keyboard and mouse events
         glfwPollEvents();
 
+        glfwGetCursorPos(window, &mouse_xpos, &mouse_ypos);
+
+        glfwSetScrollCallback(window, scroll_callback);
+
         /* decode and play */
         /*
         if (mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK)
             ao_play(dev, (char*)buffer, done);
         else mpg123_seek(mh, 0, SEEK_SET); // loop audio from start again if ended
         */
-        
+
         createGame();
         checkGameStatus(window);
         updateGameStatus();
         getCurrIndex();
-        //playmusic();
+        // playmusic();
+        // printf("%f %f\n", getMouseCoordX(), getMouseCoordY());
 
         // Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
         current_time = glfwGetTime(); // Time in seconds
