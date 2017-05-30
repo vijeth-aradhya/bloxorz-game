@@ -6,6 +6,10 @@ This is the classic bloxorz game implemented using OpenGL 3.3
 - Switch Tiles : Tiles with a white cross on them
 - Finsih Tiles : White Color
 
+# Preview
+
+![](https://media.giphy.com/media/KaIZqzWRbB24o/giphy.gif)
+
 ## Compile & Run
 
 Do a make, and then run it by executing the sample2D [ ./sample2D ]
